@@ -1,9 +1,9 @@
 import React from 'react';
-import { Activity, Trophy, Calendar } from 'lucide-react';
+import { Activity, Trophy, Calendar, Settings } from 'lucide-react';
 
 interface FooterProps {
-  activeTab: 'today' | 'progress' | 'calendar';
-  onTabChange: (tab: 'today' | 'progress' | 'calendar') => void;
+  activeTab: 'today' | 'progress' | 'calendar' | 'params';
+  onTabChange: (tab: 'today' | 'progress' | 'calendar' | 'params') => void;
 }
 
 const Footer: React.FC<FooterProps> = ({ activeTab, onTabChange }) => {
@@ -39,6 +39,16 @@ const Footer: React.FC<FooterProps> = ({ activeTab, onTabChange }) => {
           >
             <Calendar size={20} />
             <span className="text-xs mt-1 font-poppins">Calendrier</span>
+          </button>
+
+          <button 
+            onClick={() => onTabChange('params')}
+            className={`flex flex-col items-center p-2 transition-colors ${
+              activeTab === 'params' ? 'text-primary' : 'text-secondary hover:text-primary'
+            }`}
+          >
+            <Settings size={20} />
+            <span className="text-xs mt-1 font-poppins">Paramètres</span>
           </button>
         </div>
       </div>

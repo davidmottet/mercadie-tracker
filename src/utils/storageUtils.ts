@@ -205,3 +205,52 @@ export const toggleNutritionMode = (
   saveState(updatedState);
   return updatedState;
 };
+
+export const updateNutritionTarget = (
+  state: AppState,
+  date: string,
+  goalId: string,
+  amount: number
+): AppState => {
+  const currentDate = new Date(date);
+  
+  // Mettre à jour tous les jours à partir de la date actuelle
+  const updatedDailyLogs: Record<string, DailyLog> = {};
+  
+  // Copier tous les logs existants
+  Object.entries(state.dailyLogs).forEach(([logDate, log]) => {
+    const logDateObj = new Date(logDate);
+    if (logDateObj >= currentDate) {
+      // Mettre à jour les objectifs pour les jours futurs
+      const updatedGoals = log.nutritionGoals.map(goal => {
+        if (goal.id === goalId) {
+          return {
+            ...goal,
+            target: {
+              ...goal.target,
+              [log.activeMode]: amount
+            }
+          };
+        }
+        return goal;
+      });
+      
+      updatedDailyLogs[logDate] = {
+        date: log.date,
+        nutritionGoals: updatedGoals,
+        activeMode: log.activeMode
+      } as DailyLog;
+    } else {
+      // Garder les logs passés inchangés
+      updatedDailyLogs[logDate] = log;
+    }
+  });
+  
+  const updatedState = {
+    ...state,
+    dailyLogs: updatedDailyLogs
+  } as AppState;
+  
+  saveState(updatedState);
+  return updatedState;
+};

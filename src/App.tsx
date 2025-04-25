@@ -3,12 +3,14 @@ import Header from './components/Header';
 import DailyTracker from './components/DailyTracker';
 import Progress from './components/Progress';
 import Calendar from './components/Calendar';
+import Params from './components/Params';
 import Footer from './components/Footer';
 import { formatDate } from './utils/dateUtils';
 import { 
   getInitialState, 
   getDailyLog, 
   updateNutritionGoal,
+  updateNutritionTarget,
   resetNutritionGoal,
   toggleNutritionMode
 } from './utils/storageUtils';
@@ -16,7 +18,7 @@ import { AppState } from './types';
 
 function App() {
   const [state, setState] = useState<AppState>(getInitialState());
-  const [activeTab, setActiveTab] = useState<'today' | 'progress' | 'calendar'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'progress' | 'calendar' | 'params'>('today');
   
   useEffect(() => {
     const today = formatDate(new Date());
@@ -79,6 +81,11 @@ function App() {
     setState(updatedState);
   };
   
+  const handleUpdateTarget = (goalId: string, amount: number) => {
+    const updatedState = updateNutritionTarget(state, state.currentDate, goalId, amount);
+    setState(updatedState);
+  };
+  
   const handleResetGoal = (goalId: string) => {
     const updatedState = resetNutritionGoal(state, state.currentDate, goalId);
     setState(updatedState);
@@ -97,7 +104,17 @@ function App() {
         return <Progress dailyLogs={state.dailyLogs} />;
       case 'calendar':
         return <Calendar dailyLogs={state.dailyLogs} />;
+      case 'params':
+        return (
+          <Params
+            dailyLog={currentDailyLog}
+            onUpdateTarget={handleUpdateTarget}
+            onResetGoal={handleResetGoal}
+            onToggleMode={handleToggleMode}
+          />
+        );
       case 'today':
+      default:
         return (
           <DailyTracker
             dailyLog={currentDailyLog}
@@ -106,13 +123,6 @@ function App() {
             onToggleMode={handleToggleMode}
           />
         );
-      default:
-        return <DailyTracker
-          dailyLog={currentDailyLog}
-          onUpdateGoal={handleUpdateGoal}
-          onResetGoal={handleResetGoal}
-          onToggleMode={handleToggleMode}
-        />;
     }
   };
 
