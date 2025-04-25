@@ -201,9 +201,9 @@ export const toggleNutritionMode = (
       [date]: updatedDailyLog
     }
   };
-  
-  saveState(updatedState);
-  return updatedState;
+
+  saveState(updatedState as AppState);
+  return updatedState as AppState;
 };
 
 export const updateNutritionTarget = (
@@ -235,11 +235,14 @@ export const updateNutritionTarget = (
         return goal;
       });
       
-      updatedDailyLogs[logDate] = {
+      // Create a properly typed DailyLog object
+      const updatedLog = {
         date: log.date,
         nutritionGoals: updatedGoals,
         activeMode: log.activeMode
       } as DailyLog;
+      
+      updatedDailyLogs[logDate] = updatedLog;
     } else {
       // Garder les logs passés inchangés
       updatedDailyLogs[logDate] = log;

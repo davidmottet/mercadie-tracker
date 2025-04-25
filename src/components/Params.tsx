@@ -10,9 +10,6 @@ interface ParamsProps {
 }
 
 const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMode, dailyLog }) => {
-  const getGoalById = (id: string) => {
-    return dailyLog.nutritionGoals.find(goal => goal.id === id);
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
