@@ -1,5 +1,4 @@
 import React from 'react';
-import { BarChart3, TrendingUp, Award } from 'lucide-react';
 import { DailyLog } from '../types';
 
 interface ProgressProps {
@@ -49,15 +48,15 @@ const Progress: React.FC<ProgressProps> = ({ dailyLogs }) => {
   return (
     <div className="p-4 space-y-6">
       <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <BarChart3 className="text-primary" size={24} />
+        <div className="flex items-center space-x-2 mb-4">
+          <span className="text-2xl">📊</span>
           <h2 className="text-xl font-semibold text-gray-800">Moyennes sur 7 jours</h2>
         </div>
         <div className="grid gap-4">
           {averages.map(({ id, average }) => (
             <div key={id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <TrendingUp className={getProgressColor(average)} size={20} />
+                <span className="text-2xl">📈</span>
                 <span className="font-medium capitalize">
                   {id === 'water' ? 'Eau' :
                    id === 'calories' ? 'Calories' :
@@ -69,7 +68,7 @@ const Progress: React.FC<ProgressProps> = ({ dailyLogs }) => {
                 <span className={`font-semibold ${getProgressColor(average)}`}>
                   {average}%
                 </span>
-                {average >= 90 && <Award className="text-yellow-500" size={16} />}
+                {average >= 90 && <span className="text-2xl">🏆</span>}
               </div>
             </div>
           ))}
@@ -77,14 +76,14 @@ const Progress: React.FC<ProgressProps> = ({ dailyLogs }) => {
       </div>
 
       <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Award className="text-primary" size={24} />
+        <div className="flex items-center space-x-2 mb-4">
+          <span className="text-2xl">🏆</span>
           <h2 className="text-xl font-semibold text-gray-800">Réalisations</h2>
         </div>
         <div className="grid gap-4">
           {averages.filter(({ average }) => average >= 90).map(({ id }) => (
             <div key={id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <Award className="text-yellow-500" size={20} />
+              <span className="text-2xl">🏆</span>
               <span className="font-medium text-green-800">
                 Objectif {
                   id === 'water' ? "d'hydratation" :

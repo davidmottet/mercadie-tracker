@@ -1,5 +1,4 @@
 import React from 'react';
-import { Settings } from 'lucide-react';
 import { DailyLog } from '../types';
 
 interface ParamsProps {
@@ -14,8 +13,10 @@ const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMo
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6 flex items-center">
-        <Settings className="mr-2" size={24} />
-        Paramètres Nutritionnels
+        <div className="flex items-center space-x-2">
+          <span className="text-2xl">⚙️</span>
+          <span className="text-lg font-semibold">Paramètres</span>
+        </div>
       </h1>
       
       <div className="space-y-6">

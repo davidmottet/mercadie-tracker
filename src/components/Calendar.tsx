@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { DailyLog } from '../types';
 
 interface CalendarProps {
@@ -85,9 +84,9 @@ const Calendar: React.FC<CalendarProps> = ({ dailyLogs }) => {
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={prevMonth}
-            className="btn btn-sm bg-gray-100 hover:bg-gray-200 text-gray-600"
+            className="p-2 hover:bg-gray-100 rounded-full"
           >
-            <ChevronLeft size={20} />
+            <span className="text-2xl">⬅️</span>
           </button>
           
           <h2 className="text-xl font-semibold capitalize">
@@ -96,9 +95,9 @@ const Calendar: React.FC<CalendarProps> = ({ dailyLogs }) => {
           
           <button
             onClick={nextMonth}
-            className="btn btn-sm bg-gray-100 hover:bg-gray-200 text-gray-600"
+            className="p-2 hover:bg-gray-100 rounded-full"
           >
-            <ChevronRight size={20} />
+            <span className="text-2xl">➡️</span>
           </button>
         </div>
 
@@ -124,7 +123,7 @@ const Calendar: React.FC<CalendarProps> = ({ dailyLogs }) => {
                   {day.progress !== null && (
                     <div className="flex-1 flex items-center justify-center">
                       <div className={`flex items-center ${getProgressTextColor(day.progress)}`}>
-                        <Activity size={14} className="mr-1" />
+                        <span className="text-2xl">📊</span>
                         <span className="text-xs font-medium">{day.progress}%</span>
                       </div>
                     </div>

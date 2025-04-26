@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { formatReadableDate } from '../utils/dateUtils';
 
 interface HeaderProps {
@@ -32,31 +31,28 @@ const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={onPrevDay}
-                className="btn btn-sm bg-white/10 hover:bg-white/20 text-background"
-                aria-label="Jour précédent"
+                className="p-2 hover:bg-gray-100 rounded-full"
               >
-                <ChevronLeft size={20} />
+                <span className="text-2xl">⬅️</span>
               </button>
               
               <div className="flex items-center bg-white/10 rounded-lg px-3 py-1 text-background">
-                <Calendar size={18} className="mr-2" />
                 <span className="font-medium font-poppins">{formattedDate}</span>
               </div>
               
               <button
                 onClick={onNextDay}
-                className="btn btn-sm bg-white/10 hover:bg-white/20 text-background"
-                aria-label="Jour suivant"
+                className="p-2 hover:bg-gray-100 rounded-full"
               >
-                <ChevronRight size={20} />
+                <span className="text-2xl">➡️</span>
               </button>
               
               {!isToday && (
                 <button
                   onClick={onTodayClick}
-                  className="btn btn-sm bg-white/20 hover:bg-white/30 ml-2 text-background"
+                  className="p-2 hover:bg-gray-100 rounded-full"
                 >
-                  Aujourd'hui
+                  <span className="text-2xl">📅</span>
                 </button>
               )}
             </div>

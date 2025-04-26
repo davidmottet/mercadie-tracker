@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { NutritionGoal } from '../types';
-import { Plus, Minus, Settings, RotateCcw, Salad, Heart } from 'lucide-react';
 
 interface NutritionCardProps {
   goal: NutritionGoal;
@@ -126,9 +125,9 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
               aria-label="Changer de mode"
             >
               {mode === 'health' ? (
-                <Heart size={16} className={colors.text} />
+                <span className="text-2xl">❤️</span>
               ) : (
-                <Salad size={16} className={colors.text} />
+                <span className="text-2xl">🥗</span>
               )}
             </button>
           )}
@@ -137,7 +136,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
             className="btn btn-sm hover:bg-white/30"
             aria-label="Réinitialiser"
           >
-            <RotateCcw size={16} className={colors.text} />
+            <span className="text-2xl">🔄</span>
           </button>
         </div>
       </div>
@@ -172,7 +171,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
             aria-label="Diminuer"
             disabled={goal.current <= 0}
           >
-            <Minus size={16} />
+            <span>➖</span>
           </button>
           
           <div className="text-center">
@@ -186,7 +185,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
             className={`btn btn-sm ${colors.progressBg} text-background hover:opacity-80`}
             aria-label="Augmenter"
           >
-            <Plus size={16} />
+            <span>➕</span>
           </button>
         </div>
       </div>
