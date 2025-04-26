@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Auth from './components/Auth';
 import Header from './components/Header';
 import DailyTracker from './components/DailyTracker';
 import Progress from './components/Progress';
 import Calendar from './components/Calendar';
 import Params from './components/Params';
-import Footer from './components/Footer';
 import { formatDate } from './utils/dateUtils';
 import { 
   getInitialState, 
@@ -15,11 +16,18 @@ import {
   toggleNutritionMode
 } from './utils/storageUtils';
 import { AppState } from './types';
+import Parse from './parseConfig';
+import Navbar from './components/Navbar';
 
 function App() {
   const [state, setState] = useState<AppState>(getInitialState());
-  const [activeTab, setActiveTab] = useState<'today' | 'progress' | 'calendar' | 'params'>('today');
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const currentUser = Parse.User.current();
+    setIsAuthenticated(!!currentUser);
+  }, []);
+
   useEffect(() => {
     const today = formatDate(new Date());
     if (!state.dailyLogs[today]) {
@@ -32,7 +40,12 @@ function App() {
       }));
     }
   }, []);
-  
+
+  const handleLogout = async () => {
+    await Parse.User.logOut();
+    setIsAuthenticated(false);
+  };
+
   const handlePrevDay = () => {
     const currentDate = new Date(state.currentDate);
     currentDate.setDate(currentDate.getDate() - 1);
@@ -97,51 +110,50 @@ function App() {
   };
   
   const currentDailyLog = getDailyLog(state, state.currentDate);
-  
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'progress':
-        return <Progress dailyLogs={state.dailyLogs} />;
-      case 'calendar':
-        return <Calendar dailyLogs={state.dailyLogs} />;
-      case 'params':
-        return (
-          <Params
-            dailyLog={currentDailyLog}
-            onUpdateTarget={handleUpdateTarget}
-            onResetGoal={handleResetGoal}
-            onToggleMode={handleToggleMode}
-          />
-        );
-      case 'today':
-      default:
-        return (
-          <DailyTracker
-            dailyLog={currentDailyLog}
-            onUpdateGoal={handleUpdateGoal}
-            onResetGoal={handleResetGoal}
-            onToggleMode={handleToggleMode}
-          />
-        );
-    }
-  };
+
+  if (!isAuthenticated) {
+    return <Auth onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
-    <div className="min-h-screen bg-background font-poppins flex flex-col">
-      <Header
-        currentDate={state.currentDate}
-        onPrevDay={handlePrevDay}
-        onNextDay={handleNextDay}
-        onTodayClick={handleTodayClick}
-        showDateNav={activeTab === 'today'}
-      />
-      
-      <main className="flex-1 container mx-auto pb-20">
-        {renderContent()}
-      </main>
-      
-      <Footer activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+    <Router>
+      <div className="min-h-screen bg-app">
+        <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+        <div className="container mx-auto px-4 md:px-0">
+          <Header
+            currentDate={state.currentDate}
+            onPrevDay={handlePrevDay}
+            onNextDay={handleNextDay}
+            onTodayClick={handleTodayClick}
+            showDateNav={true}
+          />
+          
+          <main className="flex-1 container mx-auto pb-20">
+            <Routes>
+              <Route path="/" element={
+                <DailyTracker
+                  dailyLog={currentDailyLog}
+                  onUpdateGoal={handleUpdateGoal}
+                  onResetGoal={handleResetGoal}
+                  onToggleMode={handleToggleMode}
+                />
+              } />
+              <Route path="/progress" element={<Progress dailyLogs={state.dailyLogs} />} />
+              <Route path="/calendar" element={<Calendar dailyLogs={state.dailyLogs} />} />
+              <Route path="/params" element={
+                <Params
+                  dailyLog={currentDailyLog}
+                  onUpdateTarget={handleUpdateTarget}
+                  onResetGoal={handleResetGoal}
+                  onToggleMode={handleToggleMode}
+                />
+              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </Router>
   );
 }
 
