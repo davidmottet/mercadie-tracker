@@ -46,59 +46,80 @@ const Progress: React.FC<ProgressProps> = ({ dailyLogs }) => {
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-2xl">📊</span>
-          <h2 className="text-xl font-semibold text-gray-800">Moyennes sur 7 jours</h2>
-        </div>
-        <div className="grid gap-4">
-          {averages.map(({ id, average }) => (
-            <div key={id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📈</span>
-                <span className="font-medium capitalize">
-                  {id === 'water' ? 'Eau' :
-                   id === 'calories' ? 'Calories' :
-                   id === 'protein' ? 'Protéines' :
-                   id === 'carbs' ? 'Glucides' : 'Lipides'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`font-semibold ${getProgressColor(average)}`}>
-                  {average}%
-                </span>
-                {average >= 90 && <span className="text-2xl">🏆</span>}
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center space-x-2 mb-6">
+        <span className="text-2xl">📊</span>
+        <h1 className="text-2xl font-bold text-gray-800">Progrès</h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-2xl">🏆</span>
-          <h2 className="text-xl font-semibold text-gray-800">Réalisations</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="w-full bg-gray-50 rounded-lg shadow-lg p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="text-2xl">📈</span>
+            <h2 className="text-xl font-semibold text-gray-800">Moyennes sur 7 jours</h2>
+          </div>
+
+          <div className="space-y-6">
+            {averages.map(({ id, average }) => (
+              <div key={id} className="w-full">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">
+                      {id === 'water' ? '💧' :
+                       id === 'calories' ? '🔥' :
+                       id === 'protein' ? '🥩' :
+                       id === 'carbs' ? '🍞' : '🥑'}
+                    </span>
+                    <span className="font-medium text-gray-700 capitalize">
+                      {id === 'water' ? 'Eau' :
+                       id === 'calories' ? 'Calories' :
+                       id === 'protein' ? 'Protéines' :
+                       id === 'carbs' ? 'Glucides' : 'Lipides'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <span className={`text-lg font-semibold ${getProgressColor(average)}`}>
+                      {average}%
+                    </span>
+                    {average >= 90 && <span className="text-2xl">🏆</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="grid gap-4">
-          {averages.filter(({ average }) => average >= 90).map(({ id }) => (
-            <div key={id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <span className="text-2xl">🏆</span>
-              <span className="font-medium text-green-800">
-                Objectif {
-                  id === 'water' ? "d'hydratation" :
-                  id === 'calories' ? 'calorique' :
-                  id === 'protein' ? 'de protéines' :
-                  id === 'carbs' ? 'de glucides' : 'de lipides'
-                } atteint !
-              </span>
-            </div>
-          ))}
-          {averages.filter(({ average }) => average >= 90).length === 0 && (
-            <p className="text-gray-500 text-center py-2">
-              Continuez vos efforts pour débloquer des réalisations !
-            </p>
-          )}
+
+        <div className="w-full bg-gray-50 rounded-lg shadow-lg p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="text-2xl">🏆</span>
+            <h2 className="text-xl font-semibold text-gray-800">Réalisations</h2>
+          </div>
+
+          <div className="space-y-6">
+            {averages.filter(({ average }) => average >= 90).map(({ id }) => (
+              <div key={id} className="w-full">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl">🏆</span>
+                  <span className="font-medium text-gray-700">
+                    Objectif {
+                      id === 'water' ? "d'hydratation" :
+                      id === 'calories' ? 'calorique' :
+                      id === 'protein' ? 'de protéines' :
+                      id === 'carbs' ? 'de glucides' : 'de lipides'
+                    } atteint !
+                  </span>
+                </div>
+              </div>
+            ))}
+            {averages.filter(({ average }) => average >= 90).length === 0 && (
+              <div className="w-full">
+                <p className="text-gray-500 text-center">
+                  Continuez vos efforts pour débloquer des réalisations !
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -9,54 +9,82 @@ interface ParamsProps {
 }
 
 const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMode, dailyLog }) => {
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6 flex items-center">
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl">⚙️</span>
-          <span className="text-lg font-semibold">Paramètres</span>
-        </div>
-      </h1>
+      <div className="flex items-center space-x-2 mb-6">
+        <span className="text-2xl">⚙️</span>
+        <h1 className="text-2xl font-bold text-gray-800">Paramètres</h1>
+      </div>
       
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Objectifs Journaliers</h2>
-          <div className="space-y-4">
+      <div className="space-y-8">
+        <div className="w-full bg-gray-50 rounded-lg shadow-lg p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="text-2xl">🎯</span>
+            <h2 className="text-xl font-semibold text-gray-800">Objectifs Journaliers</h2>
+          </div>
+          
+          <div className="space-y-6">
             {dailyLog.nutritionGoals.map((goal) => (
-              <div key={goal.id} className="flex items-center justify-between">
-                <span className="font-medium">{goal.name}</span>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
-                    className="w-20 px-2 py-1 border rounded"
-                    value={goal.target[dailyLog.activeMode]}
-                    onChange={(e) => onUpdateTarget(goal.id, Number(e.target.value))}
-                  />
-                  <button
-                    onClick={() => onResetGoal(goal.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    Réinitialiser
-                  </button>
+              <div key={goal.id} className="w-full">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">
+                      {goal.id === 'water' ? '💧' :
+                       goal.id === 'calories' ? '🔥' :
+                       goal.id === 'protein' ? '🥩' :
+                       goal.id === 'carbs' ? '🍞' : '🥑'}
+                    </span>
+                    <span className="font-medium text-gray-700">{goal.name}</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="number"
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      value={goal.target[dailyLog.activeMode]}
+                      onChange={(e) => onUpdateTarget(goal.id, Number(e.target.value))}
+                    />
+                    <button
+                      onClick={() => onResetGoal(goal.id)}
+                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition duration-300"
+                    >
+                      <span className="text-2xl">🔄</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Mode de Suivi</h2>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Mode {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}</span>
-            <button
-              onClick={onToggleMode}
-              className={`px-4 py-2 rounded ${
-                dailyLog.activeMode === 'health' ? 'bg-green-500' : 'bg-red-500'
-              } text-white`}
-            >
-              {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}
-            </button>
+        <div className="w-full bg-gray-50 rounded-lg shadow-lg p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="text-2xl">🔄</span>
+            <h2 className="text-xl font-semibold text-gray-800">Mode de Suivi</h2>
+          </div>
+          
+          <div className="w-full">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">
+                  {dailyLog.activeMode === 'health' ? '❤️' : '🥗'}
+                </span>
+                <span className="font-medium text-gray-700">
+                  Mode {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}
+                </span>
+              </div>
+              
+              <button
+                onClick={onToggleMode}
+                className={`px-6 py-3 rounded-lg text-white font-medium transition duration-300 ${
+                  dailyLog.activeMode === 'health' 
+                    ? 'bg-green-500 hover:bg-green-600' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

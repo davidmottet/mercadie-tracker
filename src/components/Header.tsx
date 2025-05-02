@@ -20,29 +20,32 @@ const Header: React.FC<HeaderProps> = ({
   const isToday = new Date(currentDate).toDateString() === new Date().toDateString();
   
   return (
-    <header className="sticky top-0 z-10 bg-primary shadow-md">
-      <div className="nav-content py-4">
+    <header className="bg-gray-50 shadow-lg rounded-b-2xl">
+      <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <h1 className="text-2xl font-bold font-poppins mb-2 md:mb-0 text-background">
-            NutriTrack
-          </h1>
+          <div className="flex items-center space-x-2 mb-4 md:mb-0">
+            <span className="text-2xl">📊</span>
+            <h1 className="text-2xl font-bold font-poppins text-gray-800">
+              NutriTrack
+            </h1>
+          </div>
           
           {showDateNav && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <button
                 onClick={onPrevDay}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-2 hover:bg-gray-200 rounded-lg transition duration-300"
               >
                 <span className="text-2xl">⬅️</span>
               </button>
               
-              <div className="flex items-center bg-white/10 rounded-lg px-3 py-1 text-background">
-                <span className="font-medium font-poppins">{formattedDate}</span>
+              <div className="flex items-center bg-white rounded-lg px-4 py-2 shadow-sm">
+                <span className="font-medium font-poppins text-gray-700">{formattedDate}</span>
               </div>
               
               <button
                 onClick={onNextDay}
-                className="p-2 hover:bg-gray-100 rounded-full"
+                className="p-2 hover:bg-gray-200 rounded-lg transition duration-300"
               >
                 <span className="text-2xl">➡️</span>
               </button>
@@ -50,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({
               {!isToday && (
                 <button
                   onClick={onTodayClick}
-                  className="p-2 hover:bg-gray-100 rounded-full"
+                  className="p-2 hover:bg-gray-200 rounded-lg transition duration-300"
                 >
                   <span className="text-2xl">📅</span>
                 </button>
