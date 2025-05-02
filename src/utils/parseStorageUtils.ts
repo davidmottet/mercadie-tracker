@@ -1,7 +1,7 @@
 import Parse from '../parseConfig';
 import { AppState, DailyLog, NutritionGoal } from '../types';
 
-const defaultNutritionGoals: NutritionGoal[] = [
+export const defaultNutritionGoals: NutritionGoal[] = [
   {
     id: 'water',
     name: 'Eau',
@@ -440,6 +440,69 @@ export const updateNutritionTarget = async (
     };
   } catch (error) {
     console.error('Error updating nutrition target:', error);
+    throw error;
+  }
+};
+
+export const getDailyLog = async (date: string): Promise<DailyLog> => {
+  const currentUser = await getCurrentUser();
+
+  try {
+    // Récupérer le log quotidien
+    const query = new Parse.Query('DailyLog');
+    query.equalTo('user', currentUser);
+    query.equalTo('date', date);
+    let dailyLog = await query.first();
+
+    if (!dailyLog) {
+      // Si le log n'existe pas, le créer
+      dailyLog = new Parse.Object('DailyLog');
+      dailyLog.set('date', date);
+      dailyLog.set('activeMode', 'health');
+      dailyLog.set('user', currentUser);
+      await dailyLog.save();
+
+      // Créer les objectifs nutritionnels par défaut
+      const nutritionGoals = await Promise.all(
+        defaultNutritionGoals.map(async (goal) => {
+          const nutritionGoal = new Parse.Object('NutritionGoal');
+          nutritionGoal.set('name', goal.name);
+          nutritionGoal.set('current', goal.current);
+          nutritionGoal.set('target', goal.target);
+          nutritionGoal.set('unit', goal.unit);
+          nutritionGoal.set('color', goal.color);
+          nutritionGoal.set('user', currentUser);
+          await nutritionGoal.save();
+          return nutritionGoal;
+        })
+      );
+
+      // Associer les objectifs au log quotidien
+      const relation = dailyLog.relation('nutritionGoals');
+      for (const goal of nutritionGoals) {
+        relation.add(goal);
+      }
+      await dailyLog.save();
+    }
+
+    // Récupérer les objectifs nutritionnels
+    const nutritionGoalsQuery = dailyLog.relation('nutritionGoals').query();
+    const nutritionGoals = await nutritionGoalsQuery.find();
+
+    return {
+      date,
+      nutritionGoals: nutritionGoals.map(goal => ({
+        id: goal.id || '',
+        name: goal.get('name'),
+        current: goal.get('current'),
+        target: goal.get('target'),
+        unit: goal.get('unit'),
+        color: goal.get('color')
+      })),
+      activeMode: dailyLog.get('activeMode')
+    };
+  } catch (error) {
+    console.error('Error loading daily log:', error);
     throw error;
   }
 }; 

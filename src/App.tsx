@@ -12,9 +12,11 @@ import {
   updateNutritionGoal,
   updateNutritionTarget,
   resetNutritionGoal,
-  toggleNutritionMode
+  toggleNutritionMode,
+  defaultNutritionGoals,
+  getDailyLog
 } from './utils/parseStorageUtils';
-import { AppState } from './types';
+import { AppState, DailyLog } from './types';
 import Parse from './parseConfig';
 import Navbar from './components/Navbar';
 
@@ -24,55 +26,64 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const currentUser = Parse.User.current();
-      if (currentUser) {
-        try {
+    const checkAuthAndLoadData = async () => {
+      try {
+        const currentUser = Parse.User.current();
+        if (currentUser) {
           // Vérifier si la session est valide
           const sessionToken = currentUser.getSessionToken();
           if (sessionToken) {
             await Parse.User.become(sessionToken);
             // Attendre que l'utilisateur soit complètement authentifié
-            await Parse.User.currentAsync();
-            setIsAuthenticated(true);
+            const user = await Parse.User.currentAsync();
+            if (user && user.authenticated()) {
+              setIsAuthenticated(true);
+              // Charger les données immédiatement après l'authentification
+              try {
+                const initialState = await getInitialState();
+                setState(initialState);
+              } catch (error) {
+                console.error('Error loading initial state:', error);
+                if (error instanceof Error && error.message.includes('user is required')) {
+                  await Parse.User.logOut();
+                  setIsAuthenticated(false);
+                }
+              }
+            } else {
+              await Parse.User.logOut();
+              setIsAuthenticated(false);
+            }
           } else {
             await Parse.User.logOut();
             setIsAuthenticated(false);
           }
-        } catch (error) {
-          console.error('Session check failed:', error);
-          await Parse.User.logOut();
+        } else {
           setIsAuthenticated(false);
         }
-      } else {
+      } catch (error) {
+        console.error('Session check failed:', error);
+        await Parse.User.logOut();
         setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    checkAuth();
+    checkAuthAndLoadData();
   }, []);
 
-  useEffect(() => {
-    const loadInitialState = async () => {
-      if (isAuthenticated) {
-        try {
-          const initialState = await getInitialState();
-          setState(initialState);
-        } catch (error) {
-          console.error('Error loading initial state:', error);
-          // Si l'erreur est liée à l'authentification, déconnecter l'utilisateur
-          if (error instanceof Error && error.message.includes('user is required')) {
-            await Parse.User.logOut();
-            setIsAuthenticated(false);
-          }
-        }
-      }
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const initialState = await getInitialState();
+      setState(initialState);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Error loading initial state after login:', error);
+    } finally {
       setIsLoading(false);
-    };
-
-    loadInitialState();
-  }, [isAuthenticated]);
+    }
+  };
 
   const handleLogout = async () => {
     await Parse.User.logOut();
@@ -88,10 +99,17 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const updatedState = await getInitialState();
-      setState({
-        ...updatedState,
-        currentDate: newDate
+      const dailyLog = await getDailyLog(newDate);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          currentDate: newDate,
+          dailyLogs: {
+            ...prevState.dailyLogs,
+            [newDate]: dailyLog
+          }
+        };
       });
     } catch (error) {
       console.error('Error loading previous day:', error);
@@ -106,10 +124,17 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const updatedState = await getInitialState();
-      setState({
-        ...updatedState,
-        currentDate: newDate
+      const dailyLog = await getDailyLog(newDate);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          currentDate: newDate,
+          dailyLogs: {
+            ...prevState.dailyLogs,
+            [newDate]: dailyLog
+          }
+        };
       });
     } catch (error) {
       console.error('Error loading next day:', error);
@@ -121,10 +146,17 @@ function App() {
     
     const today = formatDate(new Date());
     try {
-      const updatedState = await getInitialState();
-      setState({
-        ...updatedState,
-        currentDate: today
+      const dailyLog = await getDailyLog(today);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          currentDate: today,
+          dailyLogs: {
+            ...prevState.dailyLogs,
+            [today]: dailyLog
+          }
+        };
       });
     } catch (error) {
       console.error('Error loading today:', error);
@@ -176,7 +208,7 @@ function App() {
   };
 
   if (!isAuthenticated) {
-    return <Auth onLogin={() => setIsAuthenticated(true)} />;
+    return <Auth onLogin={handleLogin} />;
   }
 
   if (isLoading || !state) {
