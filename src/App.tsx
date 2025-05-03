@@ -11,8 +11,8 @@ import {
   getInitialState, 
   updateNutritionLog,
   updateNutritionTarget,
-  resetNutritionLog,
-  toggleNutritionMode
+  toggleNutritionMode,
+  updateLogToDefault
 } from './utils/parseStorageUtils';
 import { AppState, NutritionLog } from './types';
 import Parse from './parseConfig';
@@ -163,7 +163,7 @@ function App() {
   
   const handleResetLog = async (logId: string) => {
     try {
-      const updatedLogs = await resetNutritionLog(logId);
+      const updatedLogs = await updateLogToDefault(logId);
       setLogs(updatedLogs);
     } catch (error) {
       console.error('Error resetting log:', error);

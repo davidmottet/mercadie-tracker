@@ -1,6 +1,5 @@
 import React from 'react';
 import { NutritionLog } from '../types';
-import { defaultLogs } from '../data/defaultLogs';
 
 interface NutritionCardProps {
   log: NutritionLog;
@@ -15,8 +14,6 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
   onReset,
   onModeToggle
 }) => {
-  const defaultLog = defaultLogs.find(dl => dl.id === log.id) || defaultLogs[0];
-
   const getProgressColor = (progress: number) => {
     if (progress >= 90) return 'bg-green-500';
     if (progress >= 70) return 'bg-yellow-500';
@@ -41,7 +38,9 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-600 mb-1">
           <span>{log.currentValue} {log.unit.name}</span>
-          <span>{log.targetValue} {log.unit.name}</span>
+          <div className="flex items-center space-x-2">
+            <span>{log.targetValue} {log.unit.name}</span>
+          </div>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div

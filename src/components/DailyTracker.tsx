@@ -1,7 +1,7 @@
 import React from 'react';
 import { NutritionLog } from '../types';
 import NutritionCard from './NutritionCard';
-import { defaultLogs } from '../data/defaultLogs';
+import { getBaseConfig } from '../services/configService';
 
 interface DailyTrackerProps {
   logs: NutritionLog[];
@@ -18,7 +18,12 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({
   onResetLog,
   onToggleMode
 }) => {
-  const displayLogs = logs.length > 0 ? logs : defaultLogs;
+  const baseConfig = getBaseConfig();
+  const displayLogs = logs.length > 0 ? logs.map(log => {
+    const baseLog = baseConfig.find(b => b.id === log.id);
+    return baseLog ? { ...log, targetValue: baseLog.targetValue } : log;
+  }) : baseConfig;
+
   const sortedLogs = [...displayLogs].sort((a, b) => {
     if (a.name === 'Eau') return -1;
     if (b.name === 'Eau') return 1;
@@ -33,7 +38,6 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({
             <NutritionCard
               log={log}
               onIncrement={(amount) => onUpdateLog(log.id, amount)}
-              onUpdateTarget={(amount) => onUpdateTarget(log.id, amount)}
               onReset={() => onResetLog(log.id)}
               onModeToggle={onToggleMode}
             />
