@@ -1,8 +1,8 @@
 import React from 'react';
-import { DailyLog } from '../types';
+import { NutritionLog } from '../types';
 
 interface ProgressProps {
-  dailyLogs: Record<string, DailyLog>;
+  dailyLogs: Record<string, NutritionLog[]>;
 }
 
 type GoalId = 'water' | 'calories' | 'protein' | 'carbs' | 'fat';
@@ -62,20 +62,19 @@ const Progress: React.FC<ProgressProps> = ({ dailyLogs }) => {
     }), {} as Record<GoalId, GoalStats>);
     
     lastSevenDays.forEach(date => {
-      const log = dailyLogs[date];
-      if (!log?.nutritionGoals) return;
+      const logs = dailyLogs[date];
+      if (!logs) return;
 
-      log.nutritionGoals.forEach(goal => {
-        const id = goal.id as GoalId;
+      logs.forEach(log => {
+        const id = log.name.toLowerCase() as GoalId;
         if (!(id in totals)) return;
 
-        const hasValue = goal.current > 0 || goal.target[log.activeMode] > 0;
+        const hasValue = log.currentValue > 0 || log.targetValue > 0;
         if (!hasValue) return;
 
-        const target = goal.target[log.activeMode];
-        if (target === 0) return;
+        if (log.targetValue === 0) return;
 
-        totals[id].sum += (goal.current / target) * 100;
+        totals[id].sum += (log.currentValue / log.targetValue) * 100;
         totals[id].count++;
       });
     });

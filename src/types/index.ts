@@ -1,22 +1,20 @@
-export interface NutritionGoal {
+export interface MeasurementUnit {
   id: string;
   name: string;
-  current: number;
-  target: {
-    health: number;
-    diet: number;
-  };
-  unit: string;
-  color: string;
 }
 
-export interface DailyLog {
-  date: string;
-  nutritionGoals: NutritionGoal[];
-  activeMode: 'health' | 'diet';
+export interface NutritionLog {
+  id: string;
+  name: string;
+  date: Date;
+  currentValue: number;
+  targetValue: number;
+  mode: 'health' | 'diet';
+  unit: MeasurementUnit;
+  user: string;
 }
 
 export interface AppState {
   currentDate: string;
-  dailyLogs: Record<string, DailyLog>;
+  nutritionLogs: Record<string, NutritionLog[]>;
 }

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { DailyLog } from '../types';
+import { NutritionLog } from '../types';
 
 interface CalendarProps {
-  dailyLogs: Record<string, DailyLog>;
+  dailyLogs: Record<string, NutritionLog[]>;
 }
 
 const Calendar: React.FC<CalendarProps> = ({ dailyLogs }) => {
@@ -21,22 +21,20 @@ const Calendar: React.FC<CalendarProps> = ({ dailyLogs }) => {
   };
 
   const getDailyProgress = (date: string) => {
-    if (!dailyLogs[date]) return null;
-
-    const goals = dailyLogs[date].nutritionGoals;
-    const mode = dailyLogs[date].activeMode;
+    const logs = dailyLogs[date];
+    if (!logs) return null;
     
     let totalProgress = 0;
-    let validGoals = 0;
+    let validLogs = 0;
 
-    goals.forEach(goal => {
-      if (goal.target[mode] > 0) {
-        totalProgress += (goal.current / goal.target[mode]) * 100;
-        validGoals++;
+    logs.forEach(log => {
+      if (log.targetValue > 0) {
+        totalProgress += (log.currentValue / log.targetValue) * 100;
+        validLogs++;
       }
     });
 
-    return validGoals > 0 ? Math.round(totalProgress / validGoals) : 0;
+    return validLogs > 0 ? Math.round(totalProgress / validLogs) : 0;
   };
 
   const getProgressColor = (progress: number | null) => {

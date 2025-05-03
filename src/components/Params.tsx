@@ -1,14 +1,18 @@
 import React from 'react';
-import { DailyLog } from '../types';
+import { NutritionLog } from '../types';
+import { defaultLogs } from '../data/defaultLogs';
 
 interface ParamsProps {
-  onUpdateTarget: (goalId: string, amount: number) => void;
-  onResetGoal: (goalId: string) => void;
+  logs: NutritionLog[];
+  onUpdateTarget: (logId: string, amount: number) => void;
+  onResetLog: (logId: string) => void;
   onToggleMode: () => void;
-  dailyLog: DailyLog;
 }
 
-const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMode, dailyLog }) => {
+const Params: React.FC<ParamsProps> = ({ logs, onUpdateTarget, onResetLog, onToggleMode }) => {
+  const displayLogs = logs.length > 0 ? logs : defaultLogs;
+  const activeMode = displayLogs[0]?.mode || 'health';
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center space-x-2 mb-6">
@@ -24,33 +28,33 @@ const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMo
           </div>
           
           <div className="space-y-6">
-            {dailyLog.nutritionGoals.map((goal) => (
-              <div key={goal.id} className="w-full">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">
-                      {goal.id === 'water' ? '💧' :
-                       goal.id === 'calories' ? '🔥' :
-                       goal.id === 'protein' ? '🥩' :
-                       goal.id === 'carbs' ? '🍞' : '🥑'}
-                    </span>
-                    <span className="font-medium text-gray-700">{goal.name}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="number"
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      value={goal.target[dailyLog.activeMode]}
-                      onChange={(e) => onUpdateTarget(goal.id, Number(e.target.value))}
-                    />
-                    <button
-                      onClick={() => onResetGoal(goal.id)}
-                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition duration-300"
-                    >
-                      <span className="text-2xl">🔄</span>
-                    </button>
-                  </div>
+            {displayLogs.map((log) => (
+              <div key={log.id} className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-medium text-gray-700">{log.name}</h3>
+                  <button
+                    onClick={() => onResetLog(log.id)}
+                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  >
+                    Réinitialiser
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="number"
+                    value={log.targetValue}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value) && value >= 0) {
+                        onUpdateTarget(log.id, value);
+                      }
+                    }}
+                    className="w-24 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="0"
+                    step="0.1"
+                  />
+                  <span className="text-gray-600">{log.unit.name}</span>
                 </div>
               </div>
             ))}
@@ -67,22 +71,22 @@ const Params: React.FC<ParamsProps> = ({ onUpdateTarget, onResetGoal, onToggleMo
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <span className="text-2xl">
-                  {dailyLog.activeMode === 'health' ? '❤️' : '🥗'}
+                  {activeMode === 'health' ? '❤️' : '🥗'}
                 </span>
                 <span className="font-medium text-gray-700">
-                  Mode {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}
+                  Mode {activeMode === 'health' ? 'Santé' : 'Régime'}
                 </span>
               </div>
               
               <button
                 onClick={onToggleMode}
                 className={`px-6 py-3 rounded-lg text-white font-medium transition duration-300 ${
-                  dailyLog.activeMode === 'health' 
+                  activeMode === 'health' 
                     ? 'bg-green-500 hover:bg-green-600' 
                     : 'bg-blue-500 hover:bg-blue-600'
                 }`}
               >
-                {dailyLog.activeMode === 'health' ? 'Santé' : 'Régime'}
+                {activeMode === 'health' ? 'Santé' : 'Régime'}
               </button>
             </div>
           </div>

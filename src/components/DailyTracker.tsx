@@ -1,36 +1,40 @@
 import React from 'react';
-import { DailyLog } from '../types';
+import { NutritionLog } from '../types';
 import NutritionCard from './NutritionCard';
+import { defaultLogs } from '../data/defaultLogs';
 
 interface DailyTrackerProps {
-  dailyLog: DailyLog;
-  onUpdateGoal: (goalId: string, amount: number) => void;
-  onResetGoal: (goalId: string) => void;
+  logs: NutritionLog[];
+  onUpdateLog: (logId: string, amount: number) => void;
+  onUpdateTarget: (logId: string, amount: number) => void;
+  onResetLog: (logId: string) => void;
   onToggleMode: () => void;
 }
 
 const DailyTracker: React.FC<DailyTrackerProps> = ({
-  dailyLog,
-  onUpdateGoal,
-  onResetGoal,
+  logs,
+  onUpdateLog,
+  onUpdateTarget,
+  onResetLog,
   onToggleMode
 }) => {
-  const sortedGoals = [...dailyLog.nutritionGoals].sort((a, b) => {
-    if (a.id === 'water') return -1;
-    if (b.id === 'water') return 1;
+  const displayLogs = logs.length > 0 ? logs : defaultLogs;
+  const sortedLogs = [...displayLogs].sort((a, b) => {
+    if (a.name === 'Eau') return -1;
+    if (b.name === 'Eau') return 1;
     return 0;
   });
   
   return (
-    <div className="p-4">
+    <div className="py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedGoals.map(goal => (
-          <div key={goal.id} className="h-full">
+        {sortedLogs.map(log => (
+          <div key={log.id} className="h-full">
             <NutritionCard
-              goal={goal}
-              mode={dailyLog.activeMode}
-              onIncrement={(amount) => onUpdateGoal(goal.id, amount)}
-              onReset={() => onResetGoal(goal.id)}
+              log={log}
+              onIncrement={(amount) => onUpdateLog(log.id, amount)}
+              onUpdateTarget={(amount) => onUpdateTarget(log.id, amount)}
+              onReset={() => onResetLog(log.id)}
               onModeToggle={onToggleMode}
             />
           </div>

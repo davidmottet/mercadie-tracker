@@ -1,9 +1,24 @@
 import Parse from 'parse';
 
-// Classe pour stocker les objectifs nutritionnels
-Parse.Object.registerSubclass('NutritionGoal', class extends Parse.Object {
+// Classe pour stocker les unités de mesure
+Parse.Object.registerSubclass('MeasurementUnit', class extends Parse.Object {
   constructor() {
-    super('NutritionGoal');
+    super('MeasurementUnit');
+  }
+
+  get name(): string {
+    return this.get('name');
+  }
+
+  set name(value: string) {
+    this.set('name', value);
+  }
+});
+
+// Classe pour stocker les logs nutritionnels
+Parse.Object.registerSubclass('NutritionLog', class extends Parse.Object {
+  constructor() {
+    super('NutritionLog');
   }
 
   get name(): string {
@@ -14,63 +29,44 @@ Parse.Object.registerSubclass('NutritionGoal', class extends Parse.Object {
     this.set('name', value);
   }
 
-  get current(): number {
-    return this.get('current');
-  }
-
-  set current(value: number) {
-    this.set('current', value);
-  }
-
-  get target(): { health: number; diet: number } {
-    return this.get('target');
-  }
-
-  set target(value: { health: number; diet: number }) {
-    this.set('target', value);
-  }
-
-  get unit(): string {
-    return this.get('unit');
-  }
-
-  set unit(value: string) {
-    this.set('unit', value);
-  }
-
-  get color(): string {
-    return this.get('color');
-  }
-
-  set color(value: string) {
-    this.set('color', value);
-  }
-});
-
-// Classe pour stocker les logs quotidiens
-Parse.Object.registerSubclass('DailyLog', class extends Parse.Object {
-  constructor() {
-    super('DailyLog');
-  }
-
-  get date(): string {
+  get date(): Date {
     return this.get('date');
   }
 
-  set date(value: string) {
+  set date(value: Date) {
     this.set('date', value);
   }
 
-  get nutritionGoals(): Parse.Relation {
-    return this.relation('nutritionGoals');
+  get currentValue(): number {
+    return this.get('currentValue');
   }
 
-  get activeMode(): 'health' | 'diet' {
-    return this.get('activeMode');
+  set currentValue(value: number) {
+    this.set('currentValue', value);
   }
 
-  set activeMode(value: 'health' | 'diet') {
-    this.set('activeMode', value);
+  get targetValue(): number {
+    return this.get('targetValue');
+  }
+
+  set targetValue(value: number) {
+    this.set('targetValue', value);
+  }
+
+  get mode(): string {
+    return this.get('mode');
+  }
+
+  set mode(value: string) {
+    this.set('mode', value);
+  }
+
+  get unit(): Parse.Pointer {
+    return this.get('unit');
+  }
+
+  set unit(value: Parse.Pointer) {
+    this.set('unit', value);
   }
 
   get user(): Parse.Pointer {

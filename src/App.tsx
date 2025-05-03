@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Auth from './components/Auth';
 import Header from './components/Header';
 import DailyTracker from './components/DailyTracker';
@@ -9,14 +9,12 @@ import Params from './components/Params';
 import { formatDate } from './utils/dateUtils';
 import { 
   getInitialState, 
-  updateNutritionGoal,
+  updateNutritionLog,
   updateNutritionTarget,
-  resetNutritionGoal,
-  toggleNutritionMode,
-  defaultNutritionGoals,
-  getDailyLog
+  resetNutritionLog,
+  toggleNutritionMode
 } from './utils/parseStorageUtils';
-import { AppState, DailyLog } from './types';
+import { AppState, NutritionLog } from './types';
 import Parse from './parseConfig';
 import Navbar from './components/Navbar';
 
@@ -24,65 +22,47 @@ function App() {
   const [state, setState] = useState<AppState | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState<NutritionLog[]>([]);
+  const [isParamsMode, setIsParamsMode] = useState(false);
 
   useEffect(() => {
-    const checkAuthAndLoadData = async () => {
-      try {
-        const currentUser = Parse.User.current();
-        if (currentUser) {
-          // Vérifier si la session est valide
-          const sessionToken = currentUser.getSessionToken();
-          if (sessionToken) {
-            await Parse.User.become(sessionToken);
-            // Attendre que l'utilisateur soit complètement authentifié
-            const user = await Parse.User.currentAsync();
-            if (user && user.authenticated()) {
-              setIsAuthenticated(true);
-              // Charger les données immédiatement après l'authentification
-              try {
-                const initialState = await getInitialState();
-                setState(initialState);
-              } catch (error) {
-                console.error('Error loading initial state:', error);
-                if (error instanceof Error && error.message.includes('user is required')) {
-                  await Parse.User.logOut();
-                  setIsAuthenticated(false);
-                }
-              }
-            } else {
-              await Parse.User.logOut();
-              setIsAuthenticated(false);
-            }
-          } else {
-            await Parse.User.logOut();
-            setIsAuthenticated(false);
-          }
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-        await Parse.User.logOut();
+    const checkAuth = async () => {
+      const currentUser = Parse.User.current();
+      if (!currentUser) {
         setIsAuthenticated(false);
-      } finally {
         setIsLoading(false);
+        return;
+      }
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (isAuthenticated) {
+        try {
+          const initialState = await getInitialState();
+          setState({
+            currentDate: formatDate(new Date()),
+            nutritionLogs: {
+              [formatDate(new Date())]: initialState.logs
+            }
+          });
+          setLogs(initialState.logs);
+        } catch (error) {
+          console.error('Error loading data:', error);
+        }
       }
     };
 
-    checkAuthAndLoadData();
-  }, []);
+    loadData();
+  }, [isAuthenticated]);
 
   const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const initialState = await getInitialState();
-      setState(initialState);
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Error loading initial state after login:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    setIsAuthenticated(true);
   };
 
   const handleLogout = async () => {
@@ -99,15 +79,15 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const dailyLog = await getDailyLog(newDate);
+      const initialState = await getInitialState();
       setState(prevState => {
         if (!prevState) return null;
         return {
           ...prevState,
           currentDate: newDate,
-          dailyLogs: {
-            ...prevState.dailyLogs,
-            [newDate]: dailyLog
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [newDate]: initialState.logs
           }
         };
       });
@@ -124,15 +104,15 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const dailyLog = await getDailyLog(newDate);
+      const initialState = await getInitialState();
       setState(prevState => {
         if (!prevState) return null;
         return {
           ...prevState,
           currentDate: newDate,
-          dailyLogs: {
-            ...prevState.dailyLogs,
-            [newDate]: dailyLog
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [newDate]: initialState.logs
           }
         };
       });
@@ -146,15 +126,15 @@ function App() {
     
     const today = formatDate(new Date());
     try {
-      const dailyLog = await getDailyLog(today);
+      const initialState = await getInitialState();
       setState(prevState => {
         if (!prevState) return null;
         return {
           ...prevState,
           currentDate: today,
-          dailyLogs: {
-            ...prevState.dailyLogs,
-            [today]: dailyLog
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [today]: initialState.logs
           }
         };
       });
@@ -163,55 +143,38 @@ function App() {
     }
   };
   
-  const handleUpdateGoal = async (goalId: string, amount: number) => {
-    if (!state) return;
-    
+  const handleUpdateLog = async (logId: string, amount: number) => {
     try {
-      const updatedState = await updateNutritionGoal(state, state.currentDate, goalId, amount);
-      setState(updatedState);
+      const updatedLogs = await updateNutritionLog(logId, amount);
+      setLogs(updatedLogs);
     } catch (error) {
-      console.error('Error updating goal:', error);
+      console.error('Error updating log:', error);
     }
   };
   
-  const handleUpdateTarget = async (goalId: string, amount: number) => {
-    if (!state) return;
-    
+  const handleUpdateTarget = async (logId: string, amount: number) => {
     try {
-      const updatedState = await updateNutritionTarget(state, state.currentDate, goalId, amount);
-      setState(updatedState);
+      const updatedLogs = await updateNutritionLog(logId, amount, true);
+      setLogs(updatedLogs);
     } catch (error) {
       console.error('Error updating target:', error);
     }
   };
   
-  const handleResetGoal = async (goalId: string) => {
-    if (!state) return;
-    
+  const handleResetLog = async (logId: string) => {
     try {
-      const updatedState = await resetNutritionGoal(state, state.currentDate, goalId);
-      setState(updatedState);
+      const updatedLogs = await resetNutritionLog(logId);
+      setLogs(updatedLogs);
     } catch (error) {
-      console.error('Error resetting goal:', error);
+      console.error('Error resetting log:', error);
     }
   };
   
-  const handleToggleMode = async () => {
-    if (!state) return;
-    
-    try {
-      const updatedState = await toggleNutritionMode(state, state.currentDate);
-      setState(updatedState);
-    } catch (error) {
-      console.error('Error toggling mode:', error);
-    }
+  const handleToggleMode = () => {
+    setIsParamsMode(!isParamsMode);
   };
 
-  if (!isAuthenticated) {
-    return <Auth onLogin={handleLogin} />;
-  }
-
-  if (isLoading || !state) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-app">
         <div className="text-2xl text-gray-700">Chargement...</div>
@@ -219,48 +182,74 @@ function App() {
     );
   }
 
-  const currentDailyLog = state.dailyLogs[state.currentDate];
-  if (!currentDailyLog) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-app">
-        <div className="text-2xl text-gray-700">Chargement des données...</div>
-      </div>
-    );
-  }
+  const currentLogs = state?.nutritionLogs[state?.currentDate] || [];
 
   return (
     <Router>
       <div className="min-h-screen bg-app">
-        <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+        {isAuthenticated && <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />}
         <div className="container mx-auto px-4 md:px-0">
           <main className="flex-1 container mx-auto pb-20">
             <Routes>
+              <Route path="/login" element={
+                !isAuthenticated ? (
+                  <Auth onLogin={handleLogin} />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              } />
               <Route path="/" element={
-                <>
-                  <Header
-                    currentDate={state.currentDate}
-                    onPrevDay={handlePrevDay}
-                    onNextDay={handleNextDay}
-                    onTodayClick={handleTodayClick}
-                    showDateNav={true}
-                  />
-                  <DailyTracker
-                    dailyLog={currentDailyLog}
-                    onUpdateGoal={handleUpdateGoal}
-                    onResetGoal={handleResetGoal}
+                isAuthenticated ? (
+                  state ? (
+                    <>
+                      <Header
+                        currentDate={state.currentDate}
+                        onPrevDay={handlePrevDay}
+                        onNextDay={handleNextDay}
+                        onTodayClick={handleTodayClick}
+                      />
+                      <DailyTracker
+                        logs={currentLogs}
+                        onUpdateLog={handleUpdateLog}
+                        onUpdateTarget={handleUpdateTarget}
+                        onResetLog={handleResetLog}
+                        onToggleMode={handleToggleMode}
+                      />
+                    </>
+                  ) : (
+                    <div className="min-h-screen flex items-center justify-center bg-app">
+                      <div className="text-2xl text-gray-700">Chargement des données...</div>
+                    </div>
+                  )
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } />
+              <Route path="/progress" element={
+                isAuthenticated ? (
+                  <Progress dailyLogs={state?.nutritionLogs || {}} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } />
+              <Route path="/calendar" element={
+                isAuthenticated ? (
+                  <Calendar dailyLogs={state?.nutritionLogs || {}} />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } />
+              <Route path="/params" element={
+                isAuthenticated ? (
+                  <Params
+                    logs={currentLogs}
+                    onUpdateTarget={handleUpdateTarget}
+                    onResetLog={handleResetLog}
                     onToggleMode={handleToggleMode}
                   />
-                </>
-              } />
-              <Route path="/progress" element={<Progress dailyLogs={state.dailyLogs} />} />
-              <Route path="/calendar" element={<Calendar dailyLogs={state.dailyLogs} />} />
-              <Route path="/params" element={
-                <Params
-                  dailyLog={currentDailyLog}
-                  onUpdateTarget={handleUpdateTarget}
-                  onResetGoal={handleResetGoal}
-                  onToggleMode={handleToggleMode}
-                />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
               } />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
