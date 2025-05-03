@@ -14,7 +14,6 @@ interface DailyTrackerProps {
 const DailyTracker: React.FC<DailyTrackerProps> = ({
   logs,
   onUpdateLog,
-  onUpdateTarget,
   onResetLog,
   onToggleMode
 }) => {
