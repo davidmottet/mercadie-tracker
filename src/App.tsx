@@ -161,12 +161,14 @@ function App() {
     }
   };
   
-  const handleResetLog = async (logId: string) => {
+  const handleResetLog = async (logId: string): Promise<NutritionLog[]> => {
     try {
       const updatedLogs = await updateLogToDefault(logId);
       setLogs(updatedLogs);
+      return updatedLogs;
     } catch (error) {
       console.error('Error resetting log:', error);
+      throw error;
     }
   };
   
@@ -242,7 +244,6 @@ function App() {
               <Route path="/params" element={
                 isAuthenticated ? (
                   <Params
-                    logs={currentLogs}
                     onUpdateTarget={handleUpdateTarget}
                     onResetLog={handleResetLog}
                     onToggleMode={handleToggleMode}

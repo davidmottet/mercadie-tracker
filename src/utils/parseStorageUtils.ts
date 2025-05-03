@@ -365,7 +365,7 @@ export const updateLogToDefault = async (logId: string): Promise<NutritionLog[]>
       date: today,
       currentValue: existingLog?.get('currentValue') || 0,
       targetValue: defaultLog.targetValue,
-      mode: defaultLog.mode,
+      mode: defaultLog.mode as 'health' | 'diet',
       unit: defaultLog.unit,
       user: currentUser.id || ''
     }];
@@ -400,7 +400,7 @@ export const toggleNutritionMode = async (
     // Mettre à jour l'état local
     const updatedLogs = state.nutritionLogs[date].map(l => ({
       ...l,
-      mode: newMode
+      mode: newMode as 'health' | 'diet'
     }));
 
     return {
