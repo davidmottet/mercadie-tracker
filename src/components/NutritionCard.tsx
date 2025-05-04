@@ -53,16 +53,16 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
       <div className="flex justify-between">
         <div className="space-x-2">
           <button
-            onClick={() => onIncrement(-0.1)}
+            onClick={() => onIncrement(-1)}
             className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
           >
-            -0.1
+            -1
           </button>
           <button
-            onClick={() => onIncrement(0.1)}
+            onClick={() => onIncrement(1)}
             className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
           >
-            +0.1
+            +1
           </button>
         </div>
         <button
