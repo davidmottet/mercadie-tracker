@@ -245,39 +245,46 @@ export const getNutritionLogs = async (): Promise<NutritionLog[]> => {
 export const updateNutritionLog = async (
   logId: string,
   amount: number,
-  isTarget: boolean = false
+  isTarget: boolean = false,
+  date: string
 ): Promise<NutritionLog[]> => {
+  console.log('=== updateNutritionLog ===');
+  console.log('Input:', { logId, amount, isTarget, date });
+  
   const currentUser = await getCurrentUser();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
 
   try {
     // Récupérer tous les logs du jour
     const logsQuery = new Parse.Query('NutritionLog');
     logsQuery.equalTo('user', currentUser);
-    logsQuery.greaterThanOrEqualTo('date', today);
-    logsQuery.lessThan('date', new Date(today.getTime() + 24 * 60 * 60 * 1000));
+    logsQuery.greaterThanOrEqualTo('date', targetDate);
+    logsQuery.lessThan('date', new Date(targetDate.getTime() + 24 * 60 * 60 * 1000));
     const existingLogs = await logsQuery.find();
 
-
-    // Chercher le log spécifique par son nom (insensible à la casse)
-    let log = existingLogs.find(l => {
-      const logName = l.get('name').toLowerCase();
-      const searchId = logId.toLowerCase();
-      return logName === searchId;
-    });
+    // Chercher le log spécifique par son ID
+    let log = existingLogs.find(l => l.id === logId);
 
     // Si le log n'existe pas, le créer
     if (!log) {
       if (!currentUser.id) throw new Error('User ID is required');
+      
       const dailyLogs = createDailyLogs(currentUser.id);
-      const matchingLog = dailyLogs.find(l => l.id.toLowerCase() === logId.toLowerCase());
+      
+      // Extraire le nom du log à partir de l'ID pour la création
+      const logName = logId.startsWith('default_') 
+        ? logId.replace('default_', '').replace(/_/g, ' ')
+        : logId;
+      
+      const matchingLog = dailyLogs.find(l => l.name.toLowerCase() === logName.toLowerCase());
+      
       if (matchingLog) {
         const newLog = new Parse.Object('NutritionLog');
         newLog.set('name', matchingLog.name);
         newLog.set('currentValue', matchingLog.currentValue);
         newLog.set('targetValue', matchingLog.targetValue);
-        newLog.set('date', matchingLog.date);
+        newLog.set('date', targetDate);
         newLog.set('mode', matchingLog.mode);
         newLog.set('user', currentUser);
         
@@ -295,16 +302,16 @@ export const updateNutritionLog = async (
         log.set('targetValue', Math.round(amount * 10) / 10);
       } else {
         const currentValue = log.get('currentValue') || 0;
-        const newValue = Math.max(0, Math.round((currentValue + amount) * 10) / 10);
+        const newValue = currentValue + amount;
         log.set('currentValue', newValue);
       }
+      
       await log.save();
     }
 
     // Récupérer tous les logs mis à jour
     const updatedLogs = await logsQuery.find();
-
-    return updatedLogs.map(log => ({
+    const updatedLogsFormatted = updatedLogs.map(log => ({
       id: log.id || '',
       name: log.get('name'),
       date: log.get('date'),
@@ -317,16 +324,36 @@ export const updateNutritionLog = async (
       },
       user: log.get('user').id || ''
     }));
+
+    // Combiner avec les logs par défaut
+    const allLogs = defaultLogs.map(defaultLog => {
+      const existingLog = updatedLogsFormatted.find(log => 
+        log.name.toLowerCase() === defaultLog.name.toLowerCase()
+      );
+
+      return existingLog || {
+        id: `default_${defaultLog.name.toLowerCase().replace(/\s+/g, '_')}`,
+        name: defaultLog.name,
+        date: targetDate,
+        currentValue: defaultLog.currentValue,
+        targetValue: defaultLog.targetValue,
+        mode: defaultLog.mode,
+        unit: defaultLog.unit,
+        user: currentUser.id || ''
+      };
+    });
+
+    return allLogs;
   } catch (error) {
-    console.error('Error updating nutrition log:', error);
+    console.error('Error in updateNutritionLog:', error);
     throw error;
   }
 };
 
-export const updateLogToDefault = async (logId: string): Promise<NutritionLog[]> => {
+export const updateLogToDefault = async (logId: string, date: string): Promise<NutritionLog[]> => {
   const currentUser = await getCurrentUser();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
 
   try {
     // 1. Récupérer la valeur par défaut de defaultLogs
@@ -348,8 +375,8 @@ export const updateLogToDefault = async (logId: string): Promise<NutritionLog[]>
     const logsQuery = new Parse.Query('NutritionLog');
     logsQuery.equalTo('user', currentUser);
     logsQuery.equalTo('name', defaultLog.name);
-    logsQuery.greaterThanOrEqualTo('date', today);
-    logsQuery.lessThan('date', new Date(today.getTime() + 24 * 60 * 60 * 1000));
+    logsQuery.greaterThanOrEqualTo('date', targetDate);
+    logsQuery.lessThan('date', new Date(targetDate.getTime() + 24 * 60 * 60 * 1000));
         
     const existingLog = await logsQuery.first();
 
@@ -362,7 +389,7 @@ export const updateLogToDefault = async (logId: string): Promise<NutritionLog[]>
     const result = [{
       id: existingLog?.id || '',
       name: defaultLog.name,
-      date: today,
+      date: targetDate,
       currentValue: existingLog?.get('currentValue') || 0,
       targetValue: defaultLog.targetValue,
       mode: defaultLog.mode as 'health' | 'diet',
@@ -454,6 +481,61 @@ export const updateNutritionTarget = async (
     };
   } catch (error) {
     console.error('Error updating nutrition target:', error);
+    throw error;
+  }
+};
+
+export const getLogsForDate = async (date: string): Promise<NutritionLog[]> => {
+  const currentUser = await getCurrentUser();
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+
+  try {
+    // Récupérer les logs existants en BDD
+    const logsQuery = new Parse.Query('NutritionLog');
+    logsQuery.equalTo('user', currentUser);
+    logsQuery.greaterThanOrEqualTo('date', targetDate);
+    logsQuery.lessThan('date', new Date(targetDate.getTime() + 24 * 60 * 60 * 1000));
+    const existingLogs = await logsQuery.find();
+
+    // Convertir les logs existants en format NutritionLog
+    const existingLogsFormatted = existingLogs.map(log => ({
+      id: log.id || '',
+      name: log.get('name'),
+      date: log.get('date'),
+      currentValue: log.get('currentValue'),
+      targetValue: log.get('targetValue'),
+      mode: log.get('mode') as 'health' | 'diet',
+      unit: {
+        id: log.get('unit').id || '',
+        name: log.get('unit').get('name')
+      },
+      user: log.get('user').id || ''
+    }));
+
+    // Créer un tableau avec tous les logs par défaut
+    const allLogs = defaultLogs.map(defaultLog => {
+      // Chercher si un log existe déjà pour ce type
+      const existingLog = existingLogsFormatted.find(log => 
+        log.name.toLowerCase() === defaultLog.name.toLowerCase()
+      );
+
+      // Si un log existe, utiliser ses valeurs, sinon utiliser les valeurs par défaut
+      return existingLog || {
+        id: `default_${defaultLog.name.toLowerCase().replace(/\s+/g, '_')}`, // ID unique basé sur le nom
+        name: defaultLog.name,
+        date: targetDate,
+        currentValue: defaultLog.currentValue,
+        targetValue: defaultLog.targetValue,
+        mode: defaultLog.mode,
+        unit: defaultLog.unit,
+        user: currentUser.id || ''
+      };
+    });
+
+    return allLogs;
+  } catch (error) {
+    console.error('Error fetching nutrition logs:', error);
     throw error;
   }
 }; 

@@ -12,7 +12,8 @@ import {
   updateNutritionLog,
   updateNutritionTarget,
   toggleNutritionMode,
-  updateLogToDefault
+  updateLogToDefault,
+  getLogsForDate
 } from './utils/parseStorageUtils';
 import { AppState, NutritionLog } from './types';
 import Parse from './parseConfig';
@@ -44,14 +45,15 @@ function App() {
     const loadData = async () => {
       if (isAuthenticated) {
         try {
-          const initialState = await getInitialState();
+          const today = formatDate(new Date());
+          const logs = await getLogsForDate(today);
           setState({
-            currentDate: formatDate(new Date()),
+            currentDate: today,
             nutritionLogs: {
-              [formatDate(new Date())]: initialState.logs
+              [today]: logs
             }
           });
-          setLogs(initialState.logs);
+          setLogs(logs);
         } catch (error) {
           console.error('Error loading data:', error);
         }
@@ -79,7 +81,7 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const initialState = await getInitialState();
+      const logs = await getLogsForDate(newDate);
       setState(prevState => {
         if (!prevState) return null;
         return {
@@ -87,7 +89,7 @@ function App() {
           currentDate: newDate,
           nutritionLogs: {
             ...prevState.nutritionLogs,
-            [newDate]: initialState.logs
+            [newDate]: logs
           }
         };
       });
@@ -104,7 +106,7 @@ function App() {
     const newDate = formatDate(currentDate);
     
     try {
-      const initialState = await getInitialState();
+      const logs = await getLogsForDate(newDate);
       setState(prevState => {
         if (!prevState) return null;
         return {
@@ -112,7 +114,7 @@ function App() {
           currentDate: newDate,
           nutritionLogs: {
             ...prevState.nutritionLogs,
-            [newDate]: initialState.logs
+            [newDate]: logs
           }
         };
       });
@@ -126,7 +128,7 @@ function App() {
     
     const today = formatDate(new Date());
     try {
-      const initialState = await getInitialState();
+      const logs = await getLogsForDate(today);
       setState(prevState => {
         if (!prevState) return null;
         return {
@@ -134,7 +136,7 @@ function App() {
           currentDate: today,
           nutritionLogs: {
             ...prevState.nutritionLogs,
-            [today]: initialState.logs
+            [today]: logs
           }
         };
       });
@@ -144,8 +146,19 @@ function App() {
   };
   
   const handleUpdateLog = async (logId: string, amount: number) => {
+    if (!state) return;
     try {
-      const updatedLogs = await updateNutritionLog(logId, amount);
+      const updatedLogs = await updateNutritionLog(logId, amount, false, state.currentDate);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [prevState.currentDate]: updatedLogs
+          }
+        };
+      });
       setLogs(updatedLogs);
     } catch (error) {
       console.error('Error updating log:', error);
@@ -153,8 +166,19 @@ function App() {
   };
   
   const handleUpdateTarget = async (logId: string, amount: number) => {
+    if (!state) return;
     try {
-      const updatedLogs = await updateNutritionLog(logId, amount, true);
+      const updatedLogs = await updateNutritionLog(logId, amount, true, state.currentDate);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [prevState.currentDate]: updatedLogs
+          }
+        };
+      });
       setLogs(updatedLogs);
     } catch (error) {
       console.error('Error updating target:', error);
@@ -162,8 +186,19 @@ function App() {
   };
   
   const handleResetLog = async (logId: string): Promise<NutritionLog[]> => {
+    if (!state) return [];
     try {
-      const updatedLogs = await updateLogToDefault(logId);
+      const updatedLogs = await updateLogToDefault(logId, state.currentDate);
+      setState(prevState => {
+        if (!prevState) return null;
+        return {
+          ...prevState,
+          nutritionLogs: {
+            ...prevState.nutritionLogs,
+            [prevState.currentDate]: updatedLogs
+          }
+        };
+      });
       setLogs(updatedLogs);
       return updatedLogs;
     } catch (error) {
@@ -173,6 +208,7 @@ function App() {
   };
   
   const handleToggleMode = () => {
+    if (!state) return;
     setIsParamsMode(!isParamsMode);
   };
 
