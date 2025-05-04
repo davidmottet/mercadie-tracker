@@ -248,9 +248,6 @@ export const updateNutritionLog = async (
   isTarget: boolean = false,
   date: string
 ): Promise<NutritionLog[]> => {
-  console.log('=== updateNutritionLog ===');
-  console.log('Input:', { logId, amount, isTarget, date });
-  
   const currentUser = await getCurrentUser();
   const targetDate = new Date(date);
   targetDate.setHours(0, 0, 0, 0);
