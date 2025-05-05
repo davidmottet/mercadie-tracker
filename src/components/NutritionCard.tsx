@@ -29,7 +29,8 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
         <h3 className="text-lg font-semibold text-gray-800">{log.name}</h3>
         <button
           onClick={onModeToggle}
-          className="text-sm px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700"
+          disabled
+          className="text-sm px-2 py-1 rounded bg-gray-100 text-gray-400 cursor-not-allowed"
         >
           {log.mode === 'health' ? 'Santé' : 'Régime'}
         </button>
@@ -44,7 +45,7 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
-            className={`h-2 rounded-full ${getProgressColor(progress)}`}
+            className={`h-2 rounded-full ${getProgressColor(progress)} transition-all duration-300 ease-in-out`}
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
@@ -53,23 +54,33 @@ const NutritionCard: React.FC<NutritionCardProps> = ({
       <div className="flex justify-between">
         <div className="space-x-2">
           <button
-            onClick={() => onIncrement(-1)}
-            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
+            onClick={() => {
+              const increment = Math.round((log.targetValue * 0.1) * 10) / 10;
+              const decrement = log.currentValue <= increment ? log.currentValue : increment;
+              onIncrement(-decrement);
+            }}
+            className="px-3 py-1 bg-gray-100 text-gray-400 rounded"
           >
-            -1
+            -10%
           </button>
           <button
-            onClick={() => onIncrement(1)}
-            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
+            onClick={() => {
+              const increment = Math.round((log.targetValue * 0.1) * 10) / 10;
+              onIncrement(increment);
+            }}
+            className="px-3 py-1 bg-gray-100 text-gray-400 rounded"
           >
-            +1
+            +10%
           </button>
         </div>
         <button
-          onClick={onReset}
-          className="px-3 py-1 bg-red-100 hover:bg-red-200 rounded text-red-700"
+          onClick={() => {
+            const remaining = Math.round((log.targetValue - log.currentValue) * 10) / 10;
+            onIncrement(remaining);
+          }}
+          className="px-3 py-1 bg-green-100 hover:bg-green-200 rounded text-green-700"
         >
-          Reset
+          Fini
         </button>
       </div>
     </div>
