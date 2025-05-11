@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './components/Auth';
 import Header from './components/Header';
 import DailyTracker from './components/DailyTracker';
@@ -7,11 +7,8 @@ import Progress from './components/Progress';
 import Calendar from './components/Calendar';
 import Params from './components/Params';
 import { formatDate } from './utils/dateUtils';
-import { 
-  getInitialState, 
+import {
   updateNutritionLog,
-  updateNutritionTarget,
-  toggleNutritionMode,
   updateLogToDefault,
   getLogsForDate
 } from './utils/parseStorageUtils';
@@ -23,8 +20,6 @@ function App() {
   const [state, setState] = useState<AppState | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [logs, setLogs] = useState<NutritionLog[]>([]);
   const [isParamsMode, setIsParamsMode] = useState(false);
 
   useEffect(() => {
@@ -53,7 +48,6 @@ function App() {
               [today]: logs
             }
           });
-          setLogs(logs);
         } catch (error) {
           console.error('Error loading data:', error);
         }
@@ -159,7 +153,6 @@ function App() {
           }
         };
       });
-      setLogs(updatedLogs);
     } catch (error) {
       console.error('Error updating log:', error);
     }
@@ -179,7 +172,6 @@ function App() {
           }
         };
       });
-      setLogs(updatedLogs);
     } catch (error) {
       console.error('Error updating target:', error);
     }
@@ -199,7 +191,6 @@ function App() {
           }
         };
       });
-      setLogs(updatedLogs);
       return updatedLogs;
     } catch (error) {
       console.error('Error resetting log:', error);
@@ -224,7 +215,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-app">
+      <div className="min-h-screen bg-app bg-gray-100">
         {isAuthenticated && <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />}
         <div className="container mx-auto px-4 md:px-0">
           <main className="flex-1 container mx-auto pb-20">
