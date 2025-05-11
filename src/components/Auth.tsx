@@ -93,14 +93,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-2xl text-gray-700">Vérification de la session...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md p-8 rounded-xl shadow-2xl bg-white">
         <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
           {isLogin ? 'Connexion' : 'Inscription'}
