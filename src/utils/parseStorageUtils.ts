@@ -57,6 +57,13 @@ const defaultNutritionLogs = [
   }
 ];
 
+// Mapping des unités par défaut vers les unités existantes
+const unitMapping: Record<string, string> = {
+  'l': 'liter',
+  'kcal': 'unit', // Utiliser 'unit' pour les calories
+  'g': 'gram'
+};
+
 export const getInitialState = async (): Promise<{ logs: NutritionLog[] }> => {
   const today = new Date().toISOString().split('T')[0];
   let currentUser;
@@ -69,21 +76,9 @@ export const getInitialState = async (): Promise<{ logs: NutritionLog[] }> => {
   }
 
   try {
-    // Récupérer toutes les unités de mesure
+    // Récupérer toutes les unités de mesure existantes
     const unitsQuery = new Parse.Query('MeasurementUnit');
-    let units = await unitsQuery.find();
-
-    // Si aucune unité n'existe, créer les unités par défaut
-    if (units.length === 0) {
-      units = await Promise.all(
-        defaultMeasurementUnits.map(async (unit) => {
-          const measurementUnit = new Parse.Object('MeasurementUnit');
-          measurementUnit.set('name', unit.name);
-          await measurementUnit.save();
-          return measurementUnit;
-        })
-      );
-    }
+    const units = await unitsQuery.find();
 
     // Récupérer tous les logs nutritionnels de l'utilisateur pour aujourd'hui
     const logsQuery = new Parse.Query('NutritionLog');
@@ -124,9 +119,15 @@ const createNutritionLogs = async (
 ): Promise<Parse.Object[]> => {
   const logs: Parse.Object[] = [];
 
-  for (const defaultLog of defaultNutritionLogs) {
-    const unit = units.find(u => u.get('name') === defaultLog.name);
-    if (!unit) continue;
+  for (const defaultLog of defaultLogs) {
+    // Trouver l'unité correspondante dans la base de données
+    const unitName = unitMapping[defaultLog.unit.name] || defaultLog.unit.name;
+    const unit = units.find(u => u.get('name').toLowerCase() === unitName.toLowerCase());
+
+    if (!unit) {
+      console.error(`Unit ${unitName} not found in database`);
+      continue;
+    }
 
     const nutritionLog = new Parse.Object('NutritionLog');
     nutritionLog.set('name', defaultLog.name);
@@ -189,6 +190,11 @@ export const getNutritionLogs = async (): Promise<NutritionLog[]> => {
       // Si pas de logs pour aujourd'hui, on en crée de nouveaux basés sur la configuration
       if (!currentUser.id) throw new Error('User ID is required');
       const dailyLogs = createDailyLogs(currentUser.id);
+      
+      // Récupérer toutes les unités de mesure existantes
+      const unitsQuery = new Parse.Query('MeasurementUnit');
+      const existingUnits = await unitsQuery.find();
+      
       const savedLogs = await Promise.all(
         dailyLogs.map(async (log) => {
           const newLog = new Parse.Object('NutritionLog');
@@ -199,10 +205,13 @@ export const getNutritionLogs = async (): Promise<NutritionLog[]> => {
           newLog.set('mode', log.mode);
           newLog.set('user', currentUser);
           
-          const unit = new Parse.Object('MeasurementUnit');
-          unit.set('name', log.unit.name);
-          await unit.save();
-          newLog.set('unit', unit);
+          // Trouver l'unité existante correspondante
+          const unitName = unitMapping[log.unit.name] || log.unit.name;
+          const existingUnit = existingUnits.find(u => u.get('name').toLowerCase() === unitName.toLowerCase());
+          if (!existingUnit) {
+            throw new Error(`Unit ${unitName} not found`);
+          }
+          newLog.set('unit', existingUnit);
           
           await newLog.save();
           return {
@@ -213,8 +222,8 @@ export const getNutritionLogs = async (): Promise<NutritionLog[]> => {
             targetValue: newLog.get('targetValue'),
             mode: newLog.get('mode') as 'health' | 'diet',
             unit: {
-              id: newLog.get('unit').id || '',
-              name: newLog.get('unit').get('name')
+              id: existingUnit.id || '',
+              name: existingUnit.get('name')
             },
             user: newLog.get('user').id || ''
           };
@@ -253,6 +262,10 @@ export const updateNutritionLog = async (
   targetDate.setHours(0, 0, 0, 0);
 
   try {
+    // Récupérer toutes les unités de mesure existantes
+    const unitsQuery = new Parse.Query('MeasurementUnit');
+    const existingUnits = await unitsQuery.find();
+
     // Récupérer tous les logs du jour
     const logsQuery = new Parse.Query('NutritionLog');
     logsQuery.equalTo('user', currentUser);
@@ -285,10 +298,13 @@ export const updateNutritionLog = async (
         newLog.set('mode', matchingLog.mode);
         newLog.set('user', currentUser);
         
-        const unit = new Parse.Object('MeasurementUnit');
-        unit.set('name', matchingLog.unit.name);
-        await unit.save();
-        newLog.set('unit', unit);
+        // Trouver l'unité existante correspondante
+        const unitName = unitMapping[matchingLog.unit.name] || matchingLog.unit.name;
+        const existingUnit = existingUnits.find(u => u.get('name').toLowerCase() === unitName.toLowerCase());
+        if (!existingUnit) {
+          throw new Error(`Unit ${unitName} not found`);
+        }
+        newLog.set('unit', existingUnit);
         
         log = await newLog.save();
       }
@@ -495,6 +511,10 @@ export const getLogsForDate = async (date: string): Promise<NutritionLog[]> => {
     logsQuery.lessThan('date', new Date(targetDate.getTime() + 24 * 60 * 60 * 1000));
     const existingLogs = await logsQuery.find();
 
+    // Récupérer toutes les unités de mesure existantes
+    const unitsQuery = new Parse.Query('MeasurementUnit');
+    const existingUnits = await unitsQuery.find();
+
     // Convertir les logs existants en format NutritionLog
     const existingLogsFormatted = existingLogs.map(log => ({
       id: log.id || '',
@@ -517,18 +537,33 @@ export const getLogsForDate = async (date: string): Promise<NutritionLog[]> => {
         log.name.toLowerCase() === defaultLog.name.toLowerCase()
       );
 
-      // Si un log existe, utiliser ses valeurs, sinon utiliser les valeurs par défaut
-      return existingLog || {
-        id: `default_${defaultLog.name.toLowerCase().replace(/\s+/g, '_')}`, // ID unique basé sur le nom
+      if (existingLog) {
+        return existingLog;
+      }
+
+      // Si aucun log n'existe, créer un nouveau avec l'unité correspondante
+      const unitName = unitMapping[defaultLog.unit.name] || defaultLog.unit.name;
+      const unit = existingUnits.find(u => u.get('name').toLowerCase() === unitName.toLowerCase());
+
+      if (!unit) {
+        console.error(`Unit ${unitName} not found for ${defaultLog.name}`);
+        return null;
+      }
+
+      return {
+        id: `default_${defaultLog.name.toLowerCase().replace(/\s+/g, '_')}`,
         name: defaultLog.name,
         date: targetDate,
         currentValue: defaultLog.currentValue,
         targetValue: defaultLog.targetValue,
         mode: defaultLog.mode,
-        unit: defaultLog.unit,
+        unit: {
+          id: unit.id || '',
+          name: unit.get('name')
+        },
         user: currentUser.id || ''
       };
-    });
+    }).filter((log): log is NutritionLog => log !== null);
 
     return allLogs;
   } catch (error) {
